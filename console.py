@@ -2,6 +2,7 @@
 """Command interpreter for AirBnB clone"""
 
 import cmd
+import shlex
 from models import storage
 from models.base_model import BaseModel
 from models.user import User
@@ -118,7 +119,7 @@ class HBNBCommand(cmd.Cmd):
         if not arg:
             print("** class name missing **")
             return
-        args = arg.split()
+        args = shlex.split(arg)
         class_name = args[0]
         if class_name not in self.__classes:
             print("** class doesn't exist **")
@@ -139,19 +140,26 @@ class HBNBCommand(cmd.Cmd):
             print("** value missing **")
             return
         attr_name = args[2]
-        attr_value = " ".join(args[3:])
-        if attr_value.startswith('"') and attr_value.endswith('"'):
-            attr_value = attr_value[1:-1]
-        elif attr_value.startswith("'") and attr_value.endswith("'"):
-            attr_value = attr_value[1:-1]
-        try:
-            if '.' in attr_value:
-                attr_value = float(attr_value)
-            else:
-                attr_value = int(attr_value)
-        except ValueError:
-            pass
+        attr_value = args[3]
+
         obj = all_objs[key]
+        cls = self.__classes[class_name]
+        current = getattr(cls, attr_name, None)
+        if current is None:
+            current = getattr(obj, attr_name, None)
+        if isinstance(current, bool):
+            pass
+        elif isinstance(current, int):
+            try:
+                attr_value = int(attr_value)
+            except ValueError:
+                pass
+        elif isinstance(current, float):
+            try:
+                attr_value = float(attr_value)
+            except ValueError:
+                pass
+
         setattr(obj, attr_name, attr_value)
         obj.save()
 
